@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Receitas Literárias</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #fdf6e3;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #a3866e;
+            color: white;
+            padding: 1rem;
+            height: 100vh;
+        }
+
+            .sidebar ul {
+                list-style: none;
+                padding: 0;
+            }
+
+            .sidebar li {
+                margin-bottom: 0.5rem;
+            }
+
+            .sidebar a {
+                color: white;
+                text-decoration: none;
+            }
+
+                .sidebar a:hover {
+                    text-decoration: underline;
+                }
+
+        .content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .intro, .receita {
+            background-color: #fbe4b2;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid #d8b594;
+        }
+
+            .intro p, .receita p {
+                line-height: 1.6;
+                margin: 0.5rem 0;
+            }
+
+            .receita strong {
+                display: block;
+                margin-top: 1rem;
+            }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Enfermidades</h2>
+        <ul id="enfermidade-list">
+            <!-- Lista de enfermidades será gerada dinamicamente -->
+        </ul>
+    </div>
+    <div class="content">
+        @RenderBody()
+    </div>
+
+    <script>
+        const receitas = {
+            "Abandono": {
+                descricao: `“Se não tiver cuidado, você pode passar o resto da vida na expectativa de ser rejeitado...`,
+                prescricao: "Canto chão, a história de Kent Haruf ________ 15 a 30 páginas por dia...",
+                comentarios: []
+            },
+            "Abatimento": {
+                descricao: `“Os que têm o espírito abatido precisam ser tratados com delicadeza...`,
+                prescricao: "Eu sou o David, de Anne Holm ________ 30 páginas por dia...",
+                comentarios: []
+            }
+        };
+
+        const enfermidadeList = document.getElementById("enfermidade-list");
+        const mainContent = document.querySelector(".content");
+
+        Object.keys(receitas).forEach(enfermidade => {
+            const listItem = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = "#";
+            link.textContent = enfermidade;
+            link.addEventListener("click", () => showReceita(enfermidade));
+            listItem.appendChild(link);
+            enfermidadeList.appendChild(listItem);
+        });
+
+        function showReceita(enfermidade) {
+            const receita = receitas[enfermidade];
+            mainContent.innerHTML = `
+                    <div class="receita">
+                        <p><strong>${enfermidade}</strong></p>
+                        <p>${receita.descricao}</p>
+                        <p><strong>Prescrição:</strong></p>
+                        <p>${receita.prescricao}</p>
+
+                        <div class="comentarios">
+                            <h4>Comentários</h4>
+                            <ul id="comentarios-list" class="list-unstyled">
+                                ${receita.comentarios.map(comentario => `<li class="alert alert-secondary">${comentario}</li>`).join("")}
+                            </ul>
+                            <textarea id="comentario-text" class="form-control mb-2" rows="3" placeholder="Escreva seu comentário..."></textarea>
+                            <button class="btn btn-primary" onclick="adicionarComentario('${enfermidade}')">Enviar</button>
+                        </div>
+                    </div>
+                `;
+
+        }
+
+        function adicionarComentario(enfermidade) {
+            const comentarioInput = document.getElementById("comentario-text");
+            const comentario = comentarioInput.value.trim();
+
+            if (comentario) {
+                const data = {
+                    nomeReceita: enfermidade, // Enviar o nome da receita
+                    texto: comentario
+                };
+
+                fetch(`/api/comentarios`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Erro ao salvar o comentário.");
+                        }
+                        return response.text();
+                    })
+                    .then(() => {
+                        alert("Comentário adicionado com sucesso!");
+                        comentarioInput.value = "";
+                        carregarComentarios(enfermidade); // Recarregar os comentários da receita
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert("Não foi possível adicionar o comentário.");
+                    });
+            } else {
+                alert("Por favor, escreva um comentário antes de enviar.");
+            }
+        }
+
+
+    </script>
+</body>
+</html>
