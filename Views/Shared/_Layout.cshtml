@@ -103,24 +103,23 @@
         function showReceita(enfermidade) {
             const receita = receitas[enfermidade];
             mainContent.innerHTML = `
-                    <div class="receita">
-                        <p><strong>${enfermidade}</strong></p>
-                        <p>${receita.descricao}</p>
-                        <p><strong>Prescrição:</strong></p>
-                        <p>${receita.prescricao}</p>
+                        <div class="receita">
+                            <p><strong>${enfermidade}</strong></p>
+                            <p>${receita.descricao}</p>
+                            <p><strong>Prescrição:</strong></p>
+                            <p>${receita.prescricao}</p>
 
-                        <div class="comentarios">
-                            <h4>Comentários</h4>
-                            <ul id="comentarios-list" class="list-unstyled">
-                                ${receita.comentarios.map(comentario => `<li class="alert alert-secondary">${comentario}</li>`).join("")}
-                            </ul>
-                            <textarea id="comentario-text" class="form-control mb-2" rows="3" placeholder="Escreva seu comentário..."></textarea>
-                            <button class="btn btn-primary" onclick="adicionarComentario('${enfermidade}')">Enviar</button>
+                            <div class="comentarios">
+                                <h4>Comentários</h4>
+                                <ul id="comentarios-list" class="list-unstyled"></ul>
+                                <textarea id="comentario-text" class="form-control mb-2" rows="3" placeholder="Escreva seu comentário..."></textarea>
+                                <button class="btn btn-primary" onclick="adicionarComentario('${enfermidade}')">Enviar</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-
+                    `;
+            carregarComentarios(enfermidade);
         }
+
 
         function adicionarComentario(enfermidade) {
             const comentarioInput = document.getElementById("comentario-text");
@@ -128,7 +127,7 @@
 
             if (comentario) {
                 const data = {
-                    nomeReceita: enfermidade, // Enviar o nome da receita
+                    nomeReceita: enfermidade, 
                     texto: comentario
                 };
 
@@ -148,7 +147,7 @@
                     .then(() => {
                         alert("Comentário adicionado com sucesso!");
                         comentarioInput.value = "";
-                        carregarComentarios(enfermidade); // Recarregar os comentários da receita
+                        carregarComentarios(enfermidade); 
                     })
                     .catch(error => {
                         console.error(error);
@@ -159,6 +158,21 @@
             }
         }
 
+        function carregarComentarios(enfermidade) {
+            fetch(`/api/comentarios/${enfermidade}`)
+                .then(response => response.json())
+                .then(comentarios => {
+                    const comentariosList = document.getElementById("comentarios-list");
+                    comentariosList.innerHTML = comentarios.map(c => `
+                                                <li class="alert alert-secondary">
+                                                    ${c.texto} - <small>${new Date(c.dataCriacao).toLocaleString()}</small>
+                                                </li>
+                                            `).join("");
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar comentários:", error);
+                });
+        }
 
     </script>
 </body>

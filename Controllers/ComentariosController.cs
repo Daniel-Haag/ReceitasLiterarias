@@ -4,47 +4,43 @@ using System.Diagnostics;
 
 namespace ReceitasLiterarias.Controllers
 {
-    public class ComentariosController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ComentariosController : ControllerBase
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public ComentariosController(ILogger<HomeController> logger)
+        public ComentariosController(ApplicationDbContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
         [HttpPost]
-        public IActionResult AdicionarComentario(int receitaId, string comentario)
+        public IActionResult AdicionarComentario([FromBody] Comentario comentario)
         {
-            //if (string.IsNullOrWhiteSpace(comentario))
-            //    return BadRequest("O comentário não pode estar vazio.");
+            if (string.IsNullOrWhiteSpace(comentario.Texto) || string.IsNullOrWhiteSpace(comentario.NomeReceita))
+            {
+                return BadRequest("O comentário ou o nome da receita não pode estar vazio.");
+            }
 
-            //var receita = _context.Receitas.FirstOrDefault(r => r.Id == receitaId);
-            //if (receita == null)
-            //    return NotFound("Receita não encontrada.");
+            comentario.DataCriacao = DateTime.Now;
 
-            //receita.Comentarios.Add(comentario);
-            //_context.SaveChanges(); // Certifique-se de que está usando um contexto persistente
-            //return Ok("Comentário adicionado com sucesso.");
+            _context.Comentarios.Add(comentario);
+            _context.SaveChanges();
 
-            return null;
+            return Ok("Comentário salvo com sucesso.");
         }
 
-
-        public IActionResult Index()
+        [HttpGet("{nomeReceita}")]
+        public IActionResult ListarComentarios(string nomeReceita)
         {
-            return View();
-        }
+            var comentarios = _context.Comentarios
+                .Where(c => c.NomeReceita == nomeReceita)
+                .OrderByDescending(c => c.DataCriacao)
+                .ToList();
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return Ok(comentarios);
         }
     }
+
 }
