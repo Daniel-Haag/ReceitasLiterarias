@@ -32,4 +32,10 @@ app.MapControllerRoute(
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate(); 
+}
+
 app.Run();
